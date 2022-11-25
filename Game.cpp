@@ -1,4 +1,5 @@
 #include "objRead.h"
+#include "Map.h"
 #define VAO_SIZE 5
 #define VBO_SIZE 10
 
@@ -12,10 +13,12 @@ void InitShader();
 char* filetobuf(const char* file);
 void changeOpenGL(int x, int y, float* ox, float* oy);
 void Keyboard(unsigned char key, int x, int y);
-void SpecialKey(int key, int x, int y);
 void Timer(int value);
 float x_init, y_init, ox, oy, mx, my;
 GLuint vao[VAO_SIZE], vbo[VBO_SIZE];
+glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 10.0f); //--- 카메라 위치
+glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 glm::mat4 view = glm::mat4(1.0f);
 glm::mat4 projection = glm::mat4(1.0f);
 unsigned int projectionLocation;
@@ -35,7 +38,9 @@ vector<glm::vec3> item_col(36, glm::vec3(0.0, 0.0, 1.0));
 vector<glm::vec3> ob_col(36, glm::vec3(1.0, 0.0, 0.0));
 vector<glm::vec3> chara_col(36, glm::vec3(0.0, 0.0, 0.0));
 vector<glm::vec3> wall_col(36, glm::vec3(0.92, 0.92, 0.92));
-vector<glm::vec3> Floor_col(4, glm::vec3(0.96, 0.96, 0.96));
+vector<glm::vec3> Floor_col(object5, glm::vec3(0.96, 0.96, 0.96));
+
+Map* map = new Map(0.0f, 15.0f);
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
@@ -46,7 +51,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(10, 10);
 	glutInitWindowSize(1100, 800);
-	glutCreateWindow("Moving Mountain Maze");
+	glutCreateWindow("Mini Ski");
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -59,7 +64,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
-	glutSpecialFunc(SpecialKey);
 	glutTimerFunc(50, Timer, 1);
 	glutMainLoop();
 }
@@ -185,14 +189,15 @@ void InitShader()
 }
 GLvoid drawScene()
 {
-	glViewport(0, 0, 800, 800);
+	glViewport(0, 0, 1100, 800);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(s_program);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-
+	
+	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 
 	viewLocation = glGetUniformLocation(s_program, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
@@ -203,7 +208,9 @@ GLvoid drawScene()
 	unsigned int modelLocation = glGetUniformLocation(s_program, "trans");
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	glBindVertexArray(vao[0]);
+	glBindVertexArray(vao[4]);
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(map->T * map->R));
+	glDrawArrays(GL_TRIANGLES, 0, object5);
 
 	glutSwapBuffers();
 }
@@ -214,7 +221,8 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 void Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
-		
+	default:
+		break;
 	}
 	glutPostRedisplay();
 }
