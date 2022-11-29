@@ -1,5 +1,10 @@
 #include "objRead.h"
 #include "Map.h"
+#include "Camera.h"
+#include "Character.h"
+#include "Item.h"
+#include "Ob.h"
+
 #define VAO_SIZE 5
 #define VBO_SIZE 10
 
@@ -13,12 +18,10 @@ void InitShader();
 char* filetobuf(const char* file);
 void changeOpenGL(int x, int y, float* ox, float* oy);
 void Keyboard(unsigned char key, int x, int y);
+void SpecialKey(int key, int x, int y);
 void Timer(int value);
 float x_init, y_init, ox, oy, mx, my;
 GLuint vao[VAO_SIZE], vbo[VBO_SIZE];
-glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 10.0f); //--- 카메라 위치
-glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 glm::mat4 view = glm::mat4(1.0f);
 glm::mat4 projection = glm::mat4(1.0f);
 unsigned int projectionLocation;
@@ -38,13 +41,26 @@ vector<glm::vec3> item_col(36, glm::vec3(0.0, 0.0, 1.0));
 vector<glm::vec3> ob_col(36, glm::vec3(1.0, 0.0, 0.0));
 vector<glm::vec3> chara_col(36, glm::vec3(0.0, 0.0, 0.0));
 vector<glm::vec3> wall_col(36, glm::vec3(0.92, 0.92, 0.92));
-vector<glm::vec3> Floor_col(object5, glm::vec3(0.96, 0.96, 0.96));
+vector<glm::vec3> Floor_col(4, glm::vec3(0.96, 0.96, 0.96));
 
+//게임 상태
+enum class STATE {LOBBY, READY, RUNNING, GAMEEND, TOTAL};
+STATE state;
+
+//obj 
 Map* map = new Map(0.0f, 15.0f);
+Character* character;
+Item* item;
+Ob* ob[5];
+
+Camera* camera;
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	srand((unsigned int)time(NULL));
+
+	//--- 초기화
+	state = STATE::LOBBY;
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
@@ -64,7 +80,9 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
+	glutSpecialFunc(SpecialKey);
 	glutTimerFunc(50, Timer, 1);
+
 	glutMainLoop();
 }
 void make_vertexShader()
@@ -189,29 +207,37 @@ void InitShader()
 }
 GLvoid drawScene()
 {
-	glViewport(0, 0, 1100, 800);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	switch (state) {
 
-	glUseProgram(s_program);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	
-	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 
-	viewLocation = glGetUniformLocation(s_program, "viewTransform");
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+		//---  RUNNING 
+	case STATE::RUNNING:
+		glViewport(0, 0, 800, 800);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	projectionLocation = glGetUniformLocation(s_program, "projectionTransform");
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, value_ptr(projection));
+		glUseProgram(s_program);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
 
-	unsigned int modelLocation = glGetUniformLocation(s_program, "trans");
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	glBindVertexArray(vao[4]);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(map->T * map->R));
-	glDrawArrays(GL_TRIANGLES, 0, object5);
+		viewLocation = glGetUniformLocation(s_program, "viewTransform");
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
+		projectionLocation = glGetUniformLocation(s_program, "projectionTransform");
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, value_ptr(projection));
+
+		unsigned int modelLocation = glGetUniformLocation(s_program, "trans");
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		glBindVertexArray(vao[4]);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(map->T * map->R));
+		glDrawArrays(GL_TRIANGLES, 0, object5);
+		break;
+		//---  RUNNING
+
+
+	}
 	glutSwapBuffers();
 }
 GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수 
@@ -221,15 +247,27 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 void Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
-	default:
-		break;
+		
 	}
 	glutPostRedisplay();
 }
 void Timer(int value) {
-	
-	glutTimerFunc(100, Timer, 1);
+	switch (state) {
+	case STATE::LOBBY://게임 실행 시,  게임 시작 전
+		break;
+	case STATE::READY://게임 시작 전 카운트 다운
+		break;
+	case STATE::RUNNING://게임 시작
+		break;
+	case STATE::GAMEEND://게임 종료
+		break;
+	case STATE::TOTAL://게임 종료 후 점수, 재도전, 종료 출력
+		break;
+	}
+
+
 	glutPostRedisplay();
+	glutTimerFunc(50, Timer, 1);
 }
 //opengl 좌표로 변환
 void changeOpenGL(int x, int y, float* ox, float* oy)
