@@ -2,16 +2,19 @@
 #include "objRead.h"
 class Map {
 public:
-	glm::mat4 T = glm::mat4(1.0);
-	glm::mat4 S = glm::mat4(1.0);
+	glm::vec3 T = glm::vec3(0.0, 0.0, 0.0);
 	glm::mat4 R = glm::mat4(1.0);
+	int dir = 1;
+	float speed = 0.5;
 
-	Map(float pos, float angle) {
-		T = glm::translate(T, glm::vec3(0.0, 0.0, -pos));
+	Map() {}
+	void init_Pos(glm::vec3 Pos, float angle) {
+
+		T = Pos;
 		R = glm::rotate(R, glm::radians(-angle), glm::vec3(1.0, 0.0, 0.0));
 	}
 
-	void Move(int dir);
+	void Move();
 
 	~Map() {}
 };

@@ -1,27 +1,35 @@
 #pragma once
 #include "Item.h"
 
-void Point::move() {
-
+void Point::Move() {
+	if (dir == 1) {
+		T.x -= 0.1;
+		T.z += speed;
+	}
+	else {
+		T.x += 0.1;
+		T.z += speed;
+	}
 }
-int Point::pluspoint(int a) {
-	return a + point;
+void Heal::Move() {
+	if (dir == 1) {
+		T.x -= 0.1;
+		T.z += speed;
+	}
+	else {
+		T.x += 0.1;
+		T.z += speed;
+	}
 }
 
-void Heal::move() {
-
-}
-int Heal::plushp(int a) {
-	return a + heal;
-}
-
-void Shield::move() {
-
-}
-int Shield::plusshield(int a) {
-	if (a != 0)
-		return a;
-	else
-		return a + shield;
+void Shield::Move() {
+	if (dir == 1) {
+		T.x -= 0.1;
+		T.z += speed;
+	}
+	else {
+		T.x += 0.1;
+		T.z += speed;
+	}
 }
 

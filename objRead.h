@@ -10,6 +10,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <deque>
+
+#include <time.h>
+#include "Camera.h"
+#include "Character.h"
+#include "Item.h"
+#include "Map.h"
+#include "Ob.h"
+
 using namespace std;
 
 struct objRead {

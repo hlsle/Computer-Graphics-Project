@@ -2,16 +2,17 @@
 #include "objRead.h"
 class Character {
 public:
-	glm::mat4 T = glm::mat4(1.0);
-	glm::mat4 S = glm::mat4(1.0);
+	glm::vec3 T = glm::vec3(0.0, 0.0, 0.0);
 	glm::mat4 R = glm::mat4(1.0);
 
+	int point = 0;
+	int hp = 3;
+	int shield = 0;
+
 	Character() {
-		
+		T.z = 3.0;
 	}
-
-	void move_rotate();
+	~Character() {
+	}
 	void jump();
-
-	~Character() {}
 };

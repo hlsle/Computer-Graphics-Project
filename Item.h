@@ -3,64 +3,70 @@
 
 class Point {
 public:
-	glm::mat4 S = glm::mat4(1.0f);
 	glm::mat4 R = glm::mat4(1.0f);
-	glm::mat4 T = glm::mat4(1.0f);
+	glm::vec3 T = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool created = false;
+	bool use = false;
+	int dir = 1;
+	float speed = 0.5;
 
-	int point;
-
-	Point(glm::vec3 a, float r) {//생성 위치, 맵의 기울기
-		R = glm::rotate(R, glm::radians(r), glm::vec3(1.0f, 0.0f, 0.1f));
-		T = glm::translate(T, a);
-
-		point = 100;
+	Point() {//생성 위치, 맵의 기울기
+	}
+	void init_pos(glm::vec3 a, float r) {
+		created = true;
+		use = true;
+		R = glm::rotate(R, glm::radians(-r), glm::vec3(1.0f, 0.0f, 0.0f));
+		T = a;
 	}
 	~Point() {
 
 	}
 
-	void move();
-	int pluspoint(int a);
+	void Move();
 };
 class Heal {
 public:
-	glm::mat4 S = glm::mat4(1.0f);
 	glm::mat4 R = glm::mat4(1.0f);
-	glm::mat4 T = glm::mat4(1.0f);
+	glm::vec3 T = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool created = false;
+	bool use = false;
+	int dir = 1;
+	float speed = 0.5;
 
-	int heal;
-
-	Heal(glm::vec3 a, float r) {//생성 위치, 맵의 기울기
-		R = glm::rotate(R, glm::radians(r), glm::vec3(1.0f, 0.0f, 0.1f));
-		T = glm::translate(T, a);
-
-		heal = 1;
+	Heal() {//생성 위치, 맵의 기울기
+	}
+	void init_pos(glm::vec3 a, float r) {
+		created = true;
+		use = true;
+		R = glm::rotate(R, glm::radians(r), glm::vec3(1.0f, 0.0f, 0.0f));
+		T = a;
 	}
 	~Heal() {
 
 	}
 
-	void move();
-	int plushp(int a);
+	void Move();
 };
 class Shield {
-	glm::mat4 S = glm::mat4(1.0f);
+public:
 	glm::mat4 R = glm::mat4(1.0f);
-	glm::mat4 T = glm::mat4(1.0f);
+	glm::vec3 T = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool created = false;
+	bool use = false;
+	int dir = 1;
+	float speed = 0.5;
 
-	int shield;
-
-	Shield(glm::vec3 a, float r) {//생성 위치, 맵의 기울기
-		R = glm::rotate(R, glm::radians(r), glm::vec3(1.0f, 0.0f, 0.1f));
-		T = glm::translate(T, a);
-
-		shield = 1;
+	Shield() {//생성 위치, 맵의 기울기
+	}
+	void init_pos(glm::vec3 a, float r) {
+		created = true;
+		use = true;
+		R = glm::rotate(R, glm::radians(r), glm::vec3(1.0f, 0.0f, 0.0f));
+		T = a;
 	}
 	~Shield() {
 
 	}
 
-	void move();
-	int plusshield(int a);
-
+	void Move();
 };

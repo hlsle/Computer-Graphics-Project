@@ -1,5 +1,6 @@
 #include "objRead.h"
 
+
 int objRead::loadObj_normalize_center(const char* filename)
 {
 	FILE* objFile;
