@@ -139,6 +139,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutKeyboardFunc(Keyboard);
 
 	glutTimerFunc(25, Frame, 1);
+	glutTimerFunc(25, Collision_check, 1);
 	glutTimerFunc(50, Timer, 1);
 	glutTimerFunc(5000, generateOb, 1);
 
