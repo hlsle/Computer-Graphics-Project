@@ -3,7 +3,7 @@
 #define VAO_SIZE 20
 #define VBO_SIZE 100
 #define GENERATOR 25
-#define Z -Floor_obj.scaleZ * 2
+#define Z -Floor_obj.scaleZ * 3
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -22,6 +22,8 @@ void generateOb(int value);
 bool chara_collision_cal(glm::vec3 a, float scaleX, float scaleY, float scaleZ);
 void Collision_check(int value);
 bool wall_collid(int type, glm::vec3 v);
+void Change_Direction();
+void Char_Rotate(int value);
 float x_init, y_init, ox, oy, mx, my;
 GLuint vao[VAO_SIZE], vbo[VBO_SIZE];
 
@@ -63,9 +65,9 @@ vector<glm::vec3> chara_col(36, glm::vec3(0.0, 1.0, 0.0));
 vector<glm::vec3> wall_col(36, glm::vec3(0.92, 0.92, 0.92));
 vector<glm::vec3> Floor_col(Floor_ver_cnt, glm::vec3(0.96, 0.96, 0.96));
 
-Map* map = new Map[3];
-Map* map2 = new Map[3];
-Map* map3 = new Map[3];
+Map* map = new Map[4];
+Map* map2 = new Map[4];
+Map* map3 = new Map[4];
 Character* ch = new Character();
 vector<float> generator;
 Rock* rock = new Rock[10];
@@ -106,15 +108,18 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	map[0].init_Pos(glm::vec3(0.0, 0.0, 0.0), 0.0);
 	map[1].init_Pos(glm::vec3(0.0, 0.0, -Floor_obj.scaleZ), 0.0);
-	map[2].init_Pos(glm::vec3(0.0, 0.0, Z), 0.0);
+	map[2].init_Pos(glm::vec3(0.0, 0.0, -Floor_obj.scaleZ * 2), 0.0);
+	map[3].init_Pos(glm::vec3(0.0, 0.0, Z), 0.0);
 
 	map2[0].init_Pos(glm::vec3(-(Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, 0.0), 0.0);
 	map2[1].init_Pos(glm::vec3(-(Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, -Floor_obj.scaleZ), 0.0);
-	map2[2].init_Pos(glm::vec3(-(Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, Z), 0.0);
+	map2[2].init_Pos(glm::vec3(-(Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, -Floor_obj.scaleZ * 2), 0.0);
+	map2[3].init_Pos(glm::vec3(-(Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, Z), 0.0);
 
 	map3[0].init_Pos(glm::vec3((Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, 0.0), 0.0);
 	map3[1].init_Pos(glm::vec3((Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, -Floor_obj.scaleZ), 0.0);
-	map3[2].init_Pos(glm::vec3((Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, Z), 0.0);
+	map3[2].init_Pos(glm::vec3((Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, -Floor_obj.scaleZ * 2), 0.0);
+	map3[3].init_Pos(glm::vec3((Floor_obj.scaleX + wall_obj.scaleX) / 2, 0.0, Z), 0.0);
 	
 	for (int i = 0; i < GENERATOR; i++) {
 		generator.push_back(-6.0 + 0.5 * i);
@@ -127,6 +132,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutTimerFunc(50, Timer, 1);
+	glutTimerFunc(50, Char_Rotate, 1);
 	glutTimerFunc(100, Jump, 1);
 	glutTimerFunc(50, Collision_check, 1);
 	glutTimerFunc(5000, generateOb, 1);
@@ -333,12 +339,9 @@ GLvoid drawScene()
 	8 shield
 	*/
 
-	// item
-	glBindVertexArray(vao[0]);
-
 	// rock
 	glBindVertexArray(vao[1]);
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 10; i++) {
 		if (rock[i].created) {
 			Trans = glm::translate(glm::mat4(1.0), rock[i].T);
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(Trans));
@@ -365,14 +368,15 @@ GLvoid drawScene()
 			glDrawArrays(GL_TRIANGLES, 0, Thorn_ver_cnt);
 		}
 	}
+
 	// character
 	glBindVertexArray(vao[2]);
 	Trans = glm::translate(glm::mat4(1.0), ch->T);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(Trans));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(Trans * ch->R));
 	glDrawArrays(GL_TRIANGLES, 0, Ch_ver_cnt);
 
 	// map
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		glBindVertexArray(vao[3]);
 		Trans = glm::translate(glm::mat4(1.0), map2[i].T);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(Trans));
@@ -418,22 +422,7 @@ void Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
 	case 'd':
-		if (d == 1)
-			d = 2;
-		else d = 1;
-		for (int i = 0; i < 3; i++) {
-			map[i].dir = d;
-			map2[i].dir = d;
-			map3[i].dir = d;
-		}
-		for (int i = 0; i < 10; i++) {
-			rock[i].dir = d;
-			bomb[i].dir = d;
-			thorn[i].dir = d;
-			point->dir = d;
-			shield->dir = d;
-			heal->dir = d;
-		}
+		Change_Direction();
 		break;
 		// space
 	case 32:
@@ -448,8 +437,27 @@ void Keyboard(unsigned char key, int x, int y)
 	}
 	glutPostRedisplay();
 }
+void Change_Direction() {
+	d *= -1;
+	for (int i = 0; i < 4; i++) {
+		map[i].dir = d;
+		map2[i].dir = d;
+		map3[i].dir = d;
+	}
+	for (int i = 0; i < 10; i++) {
+		rock[i].dir = d;
+		bomb[i].dir = d;
+		thorn[i].dir = d;
+	}
+	point->dir = d;
+	shield->dir = d;
+	heal->dir = d;
+}
+void Char_Rotate(int value) {
+
+}
 void Timer(int value) {
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		map[i].Move();
 		map2[i].Move();
 		map3[i].Move();
@@ -536,14 +544,12 @@ void Jump(int value) {
 int gene_count = 0;//생성 횟수 5번마다 아이템 생성
 void generateOb(int value) {
 
-	int kinds = 0;
+	int kinds = rand() % 3;
 	int idx = rand() % 25;
-	//int kinds = rand() % 3;
-	//int idx = rand() % 25;
 	if (gene_count % 5 != 0) {
 		switch (kinds) {
 		case Obs::ROCK:
-			for (int i = 0; i < 1; i++) {
+			for (int i = 0; i < 10; i++) {
 				if (!rock[i].created) {
 					rock[i].init_pos(glm::vec3(generator[idx], 0.0, Z), 0.0);
 					rock[i].created = true;
@@ -639,10 +645,10 @@ bool chara_collision_cal(glm::vec3 a, float scaleX, float scaleY, float scaleZ) 
 }
 void Collision_check(int value) {
 	if (wall_collid(0, map2->T)) {
-		cout << "!" << endl;
 		ch->hp--;
+		cout << d << endl;
 		d *= -1;
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			map[i].dir *= -1;
 			map2[i].dir *= -1;
 			map3[i].dir *= -1;
@@ -658,10 +664,9 @@ void Collision_check(int value) {
 		heal->dir *= -1;
 	}//map2 와 충돌
 	if (wall_collid(1, map3->T)) {
-		cout << "!!!!!!!" << endl;
 		ch->hp--;
 		d *= -1;
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			map[i].dir *= -1;
 			map2[i].dir *= -1;
 			map3[i].dir *= -1;
@@ -681,39 +686,52 @@ void Collision_check(int value) {
 		if (rock[i].created) {
 			if (chara_collision_cal(rock[i].T, Rock_obj.scaleX / 2, Rock_obj.scaleY / 2, Rock_obj.scaleZ / 2)) {
 				ch->hp--;
-				cout << "collid!!!" << endl;
-				//d *= -1;
-				//for (int i = 0; i < 3; i++) {
-				//	map[i].dir *= -1;
-				//	map2[i].dir *= -1;
-				//	map3[i].dir *= -1;
-				//}
-				//for (int i = 0; i < 10; i++) {
-				//	rock[i].dir *= -1;
-				//	bomb[i].dir *= -1;
-				//	thorn[i].dir *= -1;
-				//	point->dir *= -1;;
-				//	shield->dir *= -1;
-				//	heal->dir *= -1;
-				//}
+				d *= -1;
+				for (int i = 0; i < 3; i++) {
+					map[i].dir *= -1;
+					map2[i].dir *= -1;
+					map3[i].dir *= -1;
+				}
+				for (int i = 0; i < 10; i++) {
+					rock[i].dir *= -1;
+					bomb[i].dir *= -1;
+					thorn[i].dir *= -1;
+					
+				}
+				point->dir *= -1;;
+				shield->dir *= -1;
+				heal->dir *= -1;
+
 				rock[i].created = false;
 			}
 		}
-		//if (bomb[i].created) {
-		//	if (chara_collision_cal(bomb[i].T, Bomb_obj.scaleX / 2, Bomb_obj.scaleY / 2, Bomb_obj.scaleZ / 2)) {
-		//		ch->hp--;
-		//		ch->T.x = glm::normalize(ch->T - bomb[i].T).x * 0.1;
-		//		
-		//		ch->T.z = glm::normalize(ch->T - bomb[i].T).z * 0.1;
-		//		bomb[i].created = false;
-		//	}
-		//}
-		//if (thorn[i].created) {
-		//	if (chara_collision_cal(thorn[i].T, Thorn_obj.scaleX / 2, Thorn_obj.scaleY / 2, Thorn_obj.scaleZ / 2)) {
-		//		ch->hp--;
-		//		thorn[i].created = false;
-		//	}
-		//}
+		if (bomb[i].created) {
+			if (chara_collision_cal(bomb[i].T, Bomb_obj.scaleX / 2, Bomb_obj.scaleY / 2, Bomb_obj.scaleZ / 2)) {
+				ch->hp--;
+				d *= -1;
+				for (int i = 0; i < 3; i++) {
+					map[i].dir *= -1;
+					map2[i].dir *= -1;
+					map3[i].dir *= -1;
+				}
+				for (int i = 0; i < 10; i++) {
+					rock[i].dir *= -1;
+					bomb[i].dir *= -1;
+					thorn[i].dir *= -1;
+
+				}
+				point->dir *= -1;;
+				shield->dir *= -1;
+				heal->dir *= -1;
+				bomb[i].created = false;
+			}
+		}
+		if (thorn[i].created) {
+			if (chara_collision_cal(thorn[i].T, Thorn_obj.scaleX / 2, Thorn_obj.scaleY / 2, Thorn_obj.scaleZ / 2)) {
+				ch->hp--;
+				thorn[i].created = false;
+			}
+		}
 	}
 	//if (point->use) {
 	//	if (chara_collision_cal(point->T, Point_obj.scaleX, Point_obj.scaleY, Point_obj.scaleZ)) {
