@@ -440,18 +440,19 @@ void Keyboard(unsigned char key, int x, int y)
 void Change_Direction() {
 	d *= -1;
 	for (int i = 0; i < 4; i++) {
-		map[i].dir = d;
-		map2[i].dir = d;
-		map3[i].dir = d;
+		map[i].dir *= -1;
+		map2[i].dir *= -1;
+		map3[i].dir *= -1;
 	}
 	for (int i = 0; i < 10; i++) {
-		rock[i].dir = d;
-		bomb[i].dir = d;
-		thorn[i].dir = d;
+		rock[i].dir *= -1;
+		bomb[i].dir *= -1;
+		thorn[i].dir *= -1;
+
 	}
-	point->dir = d;
-	shield->dir = d;
-	heal->dir = d;
+	point->dir *= -1;
+	shield->dir *= -1;
+	heal->dir *= -1;
 }
 void Char_Rotate(int value) {
 
@@ -466,10 +467,10 @@ void Timer(int value) {
 			map[i].T.z = Z;
 		}
 		if (map2[i].T.z > cameraPos.z - cameraPos.y * tan((angle - glm::radians(22.5f))) + 10) {
-				map2[i].T.z = Z;
+			map2[i].T.z = Z;
 		}
 		if (map3[i].T.z > cameraPos.z - cameraPos.y * tan((angle - glm::radians(22.5f))) + 10) {
-				map3[i].T.z = Z;
+			map3[i].T.z = Z;
 		}
 	}
 	
@@ -497,19 +498,20 @@ void Timer(int value) {
 		point->Move();
 
 	if (point->T.z > cameraPos.z - cameraPos.y * tan((angle - glm::radians(22.5f))) + 10)
-		point->T.z = Z;
+		point->created = false;
 
+	
 	if (heal->created)
 		heal->Move();
 
 	if (heal->T.z > cameraPos.z - cameraPos.y * tan((angle - glm::radians(22.5f))) + 10)
-		heal->T.z = Z;
+		point->created = false;
 
 	if (shield->created)
 		shield->Move();
 
 	if (shield->T.z > cameraPos.z - cameraPos.y * tan((angle - glm::radians(22.5f))) + 10)
-		shield->T.z = Z;
+		point->created = false;
 
 	if (d == 1)
 		for (int i = 0; i < GENERATOR; i++) {
@@ -520,7 +522,7 @@ void Timer(int value) {
 			generator[i] += 0.1;
 		}
 
-	glutTimerFunc(50, Timer, 1);
+	glutTimerFunc(25, Timer, 1);
 	glutPostRedisplay();
 }
 void Jump(int value) {
@@ -646,7 +648,6 @@ bool chara_collision_cal(glm::vec3 a, float scaleX, float scaleY, float scaleZ) 
 void Collision_check(int value) {
 	if (wall_collid(0, map2->T)) {
 		ch->hp--;
-		cout << d << endl;
 		d *= -1;
 		for (int i = 0; i < 4; i++) {
 			map[i].dir *= -1;
@@ -687,7 +688,7 @@ void Collision_check(int value) {
 			if (chara_collision_cal(rock[i].T, Rock_obj.scaleX / 2, Rock_obj.scaleY / 2, Rock_obj.scaleZ / 2)) {
 				ch->hp--;
 				d *= -1;
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 4; i++) {
 					map[i].dir *= -1;
 					map2[i].dir *= -1;
 					map3[i].dir *= -1;
@@ -709,7 +710,7 @@ void Collision_check(int value) {
 			if (chara_collision_cal(bomb[i].T, Bomb_obj.scaleX / 2, Bomb_obj.scaleY / 2, Bomb_obj.scaleZ / 2)) {
 				ch->hp--;
 				d *= -1;
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 4; i++) {
 					map[i].dir *= -1;
 					map2[i].dir *= -1;
 					map3[i].dir *= -1;
@@ -733,26 +734,26 @@ void Collision_check(int value) {
 			}
 		}
 	}
-	//if (point->use) {
-	//	if (chara_collision_cal(point->T, Point_obj.scaleX, Point_obj.scaleY, Point_obj.scaleZ)) {
-	//		ch->point += 100;
-	//		point->use = false;
-	//	}
-	//}
-	//if (heal->use) {
-	//	if (chara_collision_cal(heal->T, Heal_obj.scaleX, Heal_obj.scaleY, Heal_obj.scaleZ)) {
-	//		if (ch->hp < 3)
-	//			ch->hp += 1;
-	//		heal->use = false;
-	//	}
-	//}
-	//if (shield->use) {
-	//	if (chara_collision_cal(shield->T, Shield_obj.scaleX, Shield_obj.scaleY, Shield_obj.scaleZ)) {
-	//		if (ch->shield < 1)
-	//			ch->shield += 1;
-	//		shield->use = false;
-	//	}
-	//}
+	if (point->created) {
+		if (chara_collision_cal(point->T, Point_obj.scaleX, Point_obj.scaleY, Point_obj.scaleZ)) {
+			ch->point += 100;
+			point->created = false;
+		}
+	}
+	if (heal->created) {
+		if (chara_collision_cal(heal->T, Heal_obj.scaleX, Heal_obj.scaleY, Heal_obj.scaleZ)) {
+			if (ch->hp < 3)
+				ch->hp += 1;
+			heal->created = false;
+		}
+	}
+	if (shield->created) {
+		if (chara_collision_cal(shield->T, Shield_obj.scaleX, Shield_obj.scaleY, Shield_obj.scaleZ)) {
+			if (ch->shield < 1)
+				ch->shield += 1;
+			shield->created = false;
+		}
+	}
 
 	glutTimerFunc(50, Collision_check, 1);
 	glutPostRedisplay();
